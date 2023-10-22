@@ -1,10 +1,11 @@
 pub mod metal;
 pub mod matte;
+pub mod dielectric;
 
 use super::vec::{Colour};
 use super::hit::{HitRecord};
 use super::ray::{Ray};
 
-pub trait Scatter {
+pub trait Scatter : Send + Sync {
     fn scatter(&self, r_in: &Ray, record: &HitRecord) -> Option<(Colour, Ray)>;
 }

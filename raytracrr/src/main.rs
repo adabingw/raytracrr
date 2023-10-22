@@ -7,12 +7,15 @@ mod material;
 
 use std::io::{stderr, Write};
 use rand::Rng;
+use std::sync::Arc;
+
 use vec::{Vec3, Colour, Point3};
 use ray::{Ray};
 use hit::{Hit, World};
 use sphere::{Sphere};
 use camera::{Camera};
 use material::{Scatter};
+use crate::material::{matte::Matte, metal::Metal, dielectric::Dielectric};
 
 fn ray_colour(r: &Ray, world: &World, depth: u64) -> Colour {
     // ray going from origin (camera eye) to point on the screen
@@ -33,7 +36,7 @@ fn ray_colour(r: &Ray, world: &World, depth: u64) -> Colour {
 
     if let Some(record) = world.hit(r, 0.001, f64::INFINITY) {
         if let Some((attenuation, scattered)) = record.material.scatter(r, &record) {
-            attenuation.cross(ray_colour(&scattered, world, depth - 1))
+            attenuation * ray_colour(&scattered, world, depth - 1)
         } else {
             Colour::new(0.0, 0.0, 0.0)
         }
@@ -49,16 +52,74 @@ fn main() {
     const ASPECT_RATIO: f64 = 16.0 / 9.0;
     const IMAGE_WIDTH: u64 = 256;
     const IMAGE_HEIGHT: u64 = ((IMAGE_WIDTH as f64) / ASPECT_RATIO) as u64;
-    const SAMPLES_PER_PIXEL: u64 = 100;
+    const SAMPLES_PER_PIXEL: u64 = 80;
     const MAX_DEPTH: u64 = 5;
 
     // WORLD
     let mut world = World::new();
-    world.push(Box::new(Sphere::new(Point3::new(0.0, 0.0, -1.0), 0.5)));
-    world.push(Box::new(Sphere::new(Point3::new(0.0, -100.5, -1.0), 100.0)));
-    world.push(Box::new(Sphere::new(Point3::new(0.7, -0.25, -1.0), 0.3)));
+    let mut rng = rand::thread_rng();
 
-    let camera = Camera::new();
+    for a in -11..=11 {
+        for b in -11..=11 {
+            let choose_mat: f64 = rng.gen();
+            let center = Point3::new((a as f64) + rng.gen_range(0.0..0.9),
+                                     0.2,
+                                     (b as f64) + rng.gen_range(0.0..0.9));
+
+            if choose_mat < 0.8 {
+                // Diffuse
+                let albedo = Colour::random(0.0..1.0) * Colour::random(0.0..1.0);
+                let sphere_mat = Arc::new(Matte::new(albedo));
+                let sphere = Sphere::new(center, 0.2, sphere_mat);
+
+                world.push(Box::new(sphere));
+            } else if choose_mat < 0.95 {
+                // Metal
+                let albedo = Colour::random(0.4..1.0);
+                let fuzz = rng.gen_range(0.0..0.5);
+                let sphere_mat = Arc::new(Metal::new(albedo, fuzz));
+                let sphere = Sphere::new(center, 0.2, sphere_mat);
+
+                world.push(Box::new(sphere));
+            } else {
+                // Glass
+                let sphere_mat = Arc::new(Dielectric::new(1.5));
+                let sphere = Sphere::new(center, 0.2, sphere_mat);
+
+                world.push(Box::new(sphere));
+            }
+        }
+    }
+
+    let mat_ground = Arc::new(Matte::new(Colour::new(0.5, 0.5, 0.5)));
+    let mat_center = Arc::new(Matte::new(Colour::new(0.4, 0.2, 0.1)));
+    let mat_left = Arc::new(Dielectric::new(1.5));
+    let mat_right = Arc::new(Metal::new(Colour::new(0.8, 0.6, 0.2), 0.0));
+
+    let ground_sphere = Sphere::new(Point3::new(0.0, -1000.0, 0.0), 1000.0, mat_ground);
+    let sphere_center = Sphere::new(Point3::new(0.0, 1.0, 0.0), 1.0, mat_center);
+    let sphere_left = Sphere::new(Point3::new(-4.0, 1.0, 0.0), 1.0, mat_left);
+    let sphere_right = Sphere::new(Point3::new(4.0, 1.0, 0.0), 1.0, mat_right);
+
+    world.push(Box::new(ground_sphere));
+    world.push(Box::new(sphere_center));
+    world.push(Box::new(sphere_left));
+    world.push(Box::new(sphere_right));
+
+    let lookfrom = Point3::new(13.0, 2.0, 3.0);
+    let lookat = Point3::new(0.0, 0.0, 0.0);
+    let vup = Vec3::new(0.0, 1.0, 0.0);
+    let dist_to_focus = 10.0;
+    let aperture = 0.1;
+
+    let camera = Camera::new(lookfrom,
+        lookat,
+        vup,
+        20.0,
+        ASPECT_RATIO,
+        aperture,
+        dist_to_focus
+    );
 
     println!("P3");
     println!("{} {}", IMAGE_WIDTH, IMAGE_HEIGHT);
