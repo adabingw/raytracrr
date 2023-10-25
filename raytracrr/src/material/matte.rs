@@ -28,7 +28,7 @@ impl Scatter for Matte {
             scatter_direction = record.normal;
         }
 
-        let scattered = Ray::new(record.p, scatter_direction);
+        let scattered = Ray::new_(record.p, scatter_direction, r_in.time);
         return Some((self.albedo, scattered));
     }
 }

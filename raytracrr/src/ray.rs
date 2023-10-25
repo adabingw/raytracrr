@@ -1,15 +1,25 @@
 use super::vec::{Vec3, Point3};
 
 pub struct Ray {
-    orig: Point3,
-    dir: Vec3
+    pub orig: Point3,
+    pub dir: Vec3, 
+    pub time: f64
 }
 
 impl Ray {
+    pub fn new_(origin: Point3, direction: Vec3, t: f64) -> Ray {
+        Ray {
+            orig: origin,
+            dir: direction,
+            time: t
+        }
+    }
+
     pub fn new(origin: Point3, direction: Vec3) -> Ray {
         Ray {
             orig: origin,
-            dir: direction
+            dir: direction,
+            time: 0.0
         }
     }
 

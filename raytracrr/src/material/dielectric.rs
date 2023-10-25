@@ -53,7 +53,7 @@ impl Scatter for Dielectric {
             unit_direction.refract(record.normal, refraction_ratio)
         };
 
-        let scattered = Ray::new(record.p, direction);
+        let scattered = Ray::new_(record.p, direction, r_in.time);
 
         Some((Colour::new(1.0, 1.0, 1.0), scattered))
     }

@@ -1,5 +1,6 @@
 use super::vec::{Point3, Vec3};
 use super::ray::{Ray};
+use rand::Rng;
 
 pub struct Camera {
     origin: Point3,
@@ -57,7 +58,11 @@ impl Camera {
         let rd = self.lens_radius * Vec3::random_in_sphere();
         let offset = self.cu * rd.x() + self.cv * rd.y();
 
-        Ray::new(self.origin + offset,
-                 self.lower_left_corner + s * self.horizontal + t * self.vertical - self.origin - offset)
+        let mut rng = rand::thread_rng();
+        let random_time : f64 = rng.gen();
+
+        Ray::new_(self.origin + offset,
+                 self.lower_left_corner + s * self.horizontal + t * self.vertical - self.origin - offset,
+                random_time)
     }
 }

@@ -2,6 +2,7 @@ mod vec;
 mod ray;
 mod hit;
 mod sphere;
+mod moving_sphere;
 mod camera;
 mod material;
 
@@ -13,6 +14,7 @@ use vec::{Vec3, Colour, Point3};
 use ray::{Ray};
 use hit::{Hit, World};
 use sphere::{Sphere};
+use moving_sphere::{MovingSphere};
 use camera::{Camera};
 use material::{Scatter};
 use crate::material::{matte::Matte, metal::Metal, dielectric::Dielectric};
@@ -70,22 +72,34 @@ fn main() {
                 // Diffuse
                 let albedo = Colour::random(0.0..1.0) * Colour::random(0.0..1.0);
                 let sphere_mat = Arc::new(Matte::new(albedo));
-                let sphere = Sphere::new(center, 0.2, sphere_mat);
-
+                let center1 = center + Vec3::new(0.0, rng.gen_range(0.0..0.5), 0.0);
+                let sphere = MovingSphere::new(
+                    center, 
+                    center1,
+                    0.2, 
+                    sphere_mat);
                 world.push(Box::new(sphere));
             } else if choose_mat < 0.95 {
                 // Metal
                 let albedo = Colour::random(0.4..1.0);
                 let fuzz = rng.gen_range(0.0..0.5);
                 let sphere_mat = Arc::new(Metal::new(albedo, fuzz));
-                let sphere = Sphere::new(center, 0.2, sphere_mat);
-
+                let center1 = center + Vec3::new(0.0, rng.gen_range(0.0..0.5), 0.0);
+                let sphere = MovingSphere::new(
+                    center, 
+                    center1,
+                    0.2, 
+                    sphere_mat);
                 world.push(Box::new(sphere));
             } else {
                 // Glass
                 let sphere_mat = Arc::new(Dielectric::new(1.5));
-                let sphere = Sphere::new(center, 0.2, sphere_mat);
-
+                let center1 = center + Vec3::new(0.0, rng.gen_range(0.0..0.5), 0.0);
+                let sphere = MovingSphere::new(
+                    center, 
+                    center1,
+                    0.2, 
+                    sphere_mat);
                 world.push(Box::new(sphere));
             }
         }

@@ -20,9 +20,10 @@ impl Metal {
 impl Scatter for Metal {
     fn scatter(&self, r_in: &Ray, record: &HitRecord) -> Option<(Colour, Ray)> {
         let reflected = r_in.direction().reflect(record.normal).normalized();
-        let scattered = Ray::new(
+        let scattered = Ray::new_(
             record.p, 
-            reflected + self.fuzz * Vec3::random_in_sphere()
+            reflected + self.fuzz * Vec3::random_in_sphere(),
+            r_in.time
         );
         if scattered.direction().dot(record.normal) > 0.0 {
             Some((self.albedo, scattered))
