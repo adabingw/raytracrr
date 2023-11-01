@@ -1,22 +1,22 @@
+use std::ops::Range;
 use std::sync::Arc;
 
-use super::material::Scatter;
-use super::ray::{Ray};
-use super::hit::{Hit, HitRecord};
-use super::vec::{Point3, Vec3};
+use super::aabb::{AABB};
+use crate::material::Scatter;
+use crate::ray::{Ray};
+use crate::hit::{Hit, HitRecord};
+use crate::vec::{Point3, Vec3};
 
 pub struct MovingSphere {
-    center: Point3,
+    centers: (Point3, Point3),
     radius: f64,
-    material: Arc<dyn Scatter>,
-    center_vec: Vec3
+    material: Arc<dyn Scatter>
 }
 
 impl MovingSphere {
     pub fn new(center: Point3, center1: Point3, radius: f64, material: Arc<dyn Scatter>) -> MovingSphere {
         MovingSphere {
-            center, 
-            center_vec: center1 - center,
+            centers: (center, center1), 
             radius,
             material
         }
@@ -25,12 +25,12 @@ impl MovingSphere {
     pub fn sphere_center(&self, time: f64) -> Point3 {
         // Linearly interpolate from center1 to center2 according to time, where t=0 yields
         // center1, and t = 1 yields center2.
-        self.center + time * self.center_vec
+        self.centers.0 + time * self.centers.1
     }
 }
 
 impl Hit for MovingSphere {
-    fn hit(&self, r: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
+    fn hit(&self, r: &Ray, time_range: Range<f64>) -> Option<HitRecord> {
         // (a + tb - C) ^ 2 = r^2, where P(t) = a + tb
         // check if ray hits the sphere, using quadratic equation
         let center = self.sphere_center(r.time);
@@ -49,9 +49,9 @@ impl Hit for MovingSphere {
         //  hit only "counts" if tmin < t < tmax
         let sqrt_discriminant = discriminant.sqrt();
         let mut root = (-b - sqrt_discriminant) / (2.0 * a);
-        if root < t_min || root > t_max {
+        if !time_range.contains(&root) {
             root = (-b + sqrt_discriminant) / (2.0 * a);
-            if root < t_min || root > t_max {
+            if !time_range.contains(&root) {
                 return None;
             }
         }
@@ -65,9 +65,27 @@ impl Hit for MovingSphere {
             front_face: false
         };
 
-        let outward_normal = (p - self.center) / self.radius;
+        let outward_normal = (p - center) / self.radius;
         record.set_face_normal(r, outward_normal);
 
         return Some(record);
+    }
+
+    fn bounding_box(&self, time_range: Range<f64>) -> AABB {
+        // we want the bounds of its entire range of motion. 
+        // we can take the box of the sphere at time=0, and the box of the sphere at time=1, 
+        // and compute the box around those two boxes.
+        let rvec = Vec3::new(self.radius, self.radius, self.radius);
+        let centre0 = self.sphere_center(time_range.start);
+        let minimum0 = centre0 - rvec;
+        let maximum0 = centre0 + rvec;
+        let box0 = AABB::new(minimum0, maximum0);
+
+        let centre1 = self.sphere_center(time_range.end);
+        let minimum1 = centre1 - rvec;
+        let maximum1 = centre1 + rvec;
+        let box1 = AABB::new(minimum1, maximum1);
+
+        AABB::surrounding_box(box0, box1)
     }
 }

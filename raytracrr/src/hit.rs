@@ -1,9 +1,15 @@
+pub mod sphere;
+pub mod moving_sphere;
+pub mod aabb;
+pub mod world;
+pub mod bvh;
+
 use super::vec::{Point3, Vec3};
 use super::ray::{Ray};
 use super::material::{Scatter};
+use aabb::{AABB};
+use std::ops::Range;
 use std::sync::{Arc};
-
-pub type World = Vec<Box<dyn Hit>>;
 
 pub struct HitRecord {
     pub p: Point3,
@@ -27,20 +33,14 @@ impl HitRecord {
 }
 
 pub trait Hit : Send + Sync {
-    fn hit(&self, r: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord>;
-}
+    fn hit(&self, r: &Ray, time_range: Range<f64>) -> Option<HitRecord>;
 
-impl Hit for World {
-    fn hit(&self, r: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
-        let mut temp_record = None;
-        let mut closest = t_max;
-
-        for object in self {
-            if let Some(record) = object.hit(r, t_min, closest) {
-                closest = record.t;
-                temp_record = Some(record);
-            }
-        }
-        temp_record
-    }
+    // interval values constructed without arguments will be empty by default. 
+    // Since an aabb object has an interval for each of its three dimensions, 
+    // each of these will then be empty by default, and therefore aabb objects will be empty by default. 
+    // Thus, some objects may have empty bounding volumes. 
+    // For example, consider a hittable_list object with no children.
+    // recall that some objects may be animated. 
+    // Such objects should return their bounds over the entire range of motion, from time=0 to time=1.
+    fn bounding_box(&self, time_range: Range<f64>) -> AABB;
 }

@@ -1,8 +1,6 @@
 mod vec;
 mod ray;
 mod hit;
-mod sphere;
-mod moving_sphere;
 mod camera;
 mod material;
 
@@ -12,9 +10,10 @@ use std::sync::Arc;
 
 use vec::{Vec3, Colour, Point3};
 use ray::{Ray};
-use hit::{Hit, World};
-use sphere::{Sphere};
-use moving_sphere::{MovingSphere};
+use hit::{Hit};
+use hit::world::{World};
+use hit::sphere::{Sphere};
+use hit::moving_sphere::{MovingSphere};
 use camera::{Camera};
 use material::{Scatter};
 use crate::material::{matte::Matte, metal::Metal, dielectric::Dielectric};
@@ -36,7 +35,7 @@ fn ray_colour(r: &Ray, world: &World, depth: u64) -> Colour {
         return Colour::new(0.0, 0.0, 0.0);
     }
 
-    if let Some(record) = world.hit(r, 0.001, f64::INFINITY) {
+    if let Some(record) = world.hit(r, 0.001..f64::INFINITY) {
         if let Some((attenuation, scattered)) = record.material.scatter(r, &record) {
             attenuation * ray_colour(&scattered, world, depth - 1)
         } else {
@@ -78,7 +77,7 @@ fn main() {
                     center1,
                     0.2, 
                     sphere_mat);
-                world.push(Box::new(sphere));
+                world.push(Arc::new(Box::new(sphere)));
             } else if choose_mat < 0.95 {
                 // Metal
                 let albedo = Colour::random(0.4..1.0);
@@ -90,7 +89,7 @@ fn main() {
                     center1,
                     0.2, 
                     sphere_mat);
-                world.push(Box::new(sphere));
+                world.push(Arc::new(Box::new(sphere)));
             } else {
                 // Glass
                 let sphere_mat = Arc::new(Dielectric::new(1.5));
@@ -100,7 +99,7 @@ fn main() {
                     center1,
                     0.2, 
                     sphere_mat);
-                world.push(Box::new(sphere));
+                world.push(Arc::new(Box::new(sphere)));
             }
         }
     }
@@ -115,10 +114,10 @@ fn main() {
     let sphere_left = Sphere::new(Point3::new(-4.0, 1.0, 0.0), 1.0, mat_left);
     let sphere_right = Sphere::new(Point3::new(4.0, 1.0, 0.0), 1.0, mat_right);
 
-    world.push(Box::new(ground_sphere));
-    world.push(Box::new(sphere_center));
-    world.push(Box::new(sphere_left));
-    world.push(Box::new(sphere_right));
+    world.push(Arc::new(Box::new(ground_sphere)));
+    world.push(Arc::new(Box::new(sphere_center)));
+    world.push(Arc::new(Box::new(sphere_left)));
+    world.push(Arc::new(Box::new(sphere_right)));
 
     let lookfrom = Point3::new(13.0, 2.0, 3.0);
     let lookat = Point3::new(0.0, 0.0, 0.0);
