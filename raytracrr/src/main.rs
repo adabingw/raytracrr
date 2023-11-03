@@ -3,6 +3,7 @@ mod ray;
 mod hit;
 mod camera;
 mod material;
+mod texture;
 
 use std::io::{stderr, Write};
 use rand::Rng;
@@ -16,7 +17,10 @@ use hit::sphere::{Sphere};
 use hit::moving_sphere::{MovingSphere};
 use camera::{Camera};
 use material::{Scatter};
+use crate::hit::sphere;
 use crate::material::{matte::Matte, metal::Metal, dielectric::Dielectric};
+use crate::texture::checker::Checker;
+use crate::texture::solid::Solid;
 
 fn ray_colour(r: &Ray, world: &World, depth: u64) -> Colour {
     // ray going from origin (camera eye) to point on the screen
@@ -57,6 +61,12 @@ fn main() {
     const MAX_DEPTH: u64 = 5;
 
     // WORLD
+    let checker = Arc::new(
+        Checker::new_texture(0.32, 
+            Colour::new(0.2, 0.3, 0.1),
+            Colour::new(0.9, 0.9, 0.9)
+        )
+    );
     let mut world = World::new();
     let mut rng = rand::thread_rng();
 
@@ -70,19 +80,34 @@ fn main() {
             if choose_mat < 0.8 {
                 // Diffuse
                 let albedo = Colour::random(0.0..1.0) * Colour::random(0.0..1.0);
-                let sphere_mat = Arc::new(Matte::new(albedo));
+                let sphere_mat = Arc::new(
+                    Matte::new(
+                        Arc::new(
+                            Solid::new(albedo)
+                        )
+                    )
+                );
                 let center1 = center + Vec3::new(0.0, rng.gen_range(0.0..0.5), 0.0);
-                let sphere = MovingSphere::new(
-                    center, 
-                    center1,
-                    0.2, 
-                    sphere_mat);
+                let sphere = Sphere::new(
+                    center, 0.2, sphere_mat
+                );
+                // let sphere = MovingSphere::new(
+                //     center, 
+                //     center1,
+                //     0.2, 
+                //     sphere_mat);
                 world.push(Arc::new(Box::new(sphere)));
             } else if choose_mat < 0.95 {
                 // Metal
                 let albedo = Colour::random(0.4..1.0);
                 let fuzz = rng.gen_range(0.0..0.5);
-                let sphere_mat = Arc::new(Metal::new(albedo, fuzz));
+                let sphere_mat = Arc::new(
+                    Metal::new(
+                        Arc::new(
+                            Solid::new(albedo)
+                        ), fuzz
+                    )
+                );
                 let center1 = center + Vec3::new(0.0, rng.gen_range(0.0..0.5), 0.0);
                 let sphere = MovingSphere::new(
                     center, 
@@ -104,10 +129,10 @@ fn main() {
         }
     }
 
-    let mat_ground = Arc::new(Matte::new(Colour::new(0.5, 0.5, 0.5)));
-    let mat_center = Arc::new(Matte::new(Colour::new(0.4, 0.2, 0.1)));
+    let mat_ground = Arc::new(Matte::new(checker));
+    let mat_center = Arc::new(Matte::new(Arc::new(Solid::new(Colour::new(0.4, 0.2, 0.1)))));
     let mat_left = Arc::new(Dielectric::new(1.5));
-    let mat_right = Arc::new(Metal::new(Colour::new(0.8, 0.6, 0.2), 0.0));
+    let mat_right = Arc::new(Metal::new(Arc::new(Solid::new(Colour::new(0.8, 0.6, 0.2))), 0.0));
 
     let ground_sphere = Sphere::new(Point3::new(0.0, -1000.0, 0.0), 1000.0, mat_ground);
     let sphere_center = Sphere::new(Point3::new(0.0, 1.0, 0.0), 1.0, mat_center);

@@ -3,7 +3,7 @@ use rand::{Rng};
 use crate::material::{Scatter};
 use crate::vec::{Colour, Vec3};
 use crate::ray::{Ray};
-use crate::hit::{HitRecord};
+use crate::hit::hit_record::{HitRecord};
 
 // with dielectric spheres is to note that if you use a negative radius, the geometry is unaffected, 
 // but the surface normal points inward. This can be used as a bubble to make a hollow glass sphere:

@@ -1,3 +1,4 @@
+use std::f64::consts::PI;
 use std::ops::Range;
 use std::sync::Arc;
 
@@ -57,15 +58,19 @@ impl Hit for MovingSphere {
         }
 
         let p = r.at(root);
+        let outward_normal = (p - center) / self.radius;
+        let (u, v) = get_sphere_uv(outward_normal);
+
         let mut record = HitRecord {
             p,
             t: root, 
+            u: u, 
+            v: v,
             material: self.material.clone(),
             normal: Vec3::new(0.0, 0.0, 0.0),
             front_face: false
         };
 
-        let outward_normal = (p - center) / self.radius;
         record.set_face_normal(r, outward_normal);
 
         return Some(record);
@@ -88,4 +93,20 @@ impl Hit for MovingSphere {
 
         AABB::surrounding_box(box0, box1)
     }
+}
+
+fn get_sphere_uv(p: Vec3) -> (f64, f64) {
+    // p: a given point on the sphere of radius one, centred at the origin.
+    // u: returned value [0,1] of angle around the Y axis from X=-1.
+    // v: returned value [0,1] of angle from Y=-1 to Y=+1.
+    //     <1 0 0> yields <0.50 0.50>       <-1  0  0> yields <0.00 0.50>
+    //     <0 1 0> yields <0.50 1.00>       < 0 -1  0> yields <0.50 0.00>
+    //     <0 0 1> yields <0.25 0.50>       < 0  0 -1> yields <0.75 0.50>
+    let phi = p.y().atan2(p.x()) + PI;
+    let theta = -p.y().acos();
+
+    let u = phi / (2.0 * PI);
+    let v = theta / PI;
+
+    (u, v)
 }

@@ -2,7 +2,9 @@ use std::{ops::Range, mem, cmp::Ordering};
 
 use crate::{vec::Vec3, ray::Ray};
 
-// TODO: EXPLAIN
+// minimum.x, maximum.x represents the x range
+// minimum.y, maximum.y represents the y range, etc
+// when given 2 bounding boxes, the minimum.x is the min(minimum1.x, minimum2.x), etc
 #[derive(Clone)]
 pub struct AABB {
     minimum: Vec3, 

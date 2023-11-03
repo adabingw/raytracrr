@@ -1,14 +1,17 @@
+use std::sync::Arc;
+
 use crate::material::{Scatter};
+use crate::texture::Texture;
 use crate::vec::{Colour, Vec3};
 use crate::ray::{Ray};
-use crate::hit::{HitRecord};
+use crate::hit::hit_record::{HitRecord};
 
 pub struct Matte {
-    albedo: Colour
+    albedo: Arc<dyn Texture>
 }
 
 impl Matte {
-    pub fn new(albedo: Colour) -> Matte {
+    pub fn new(albedo: Arc<dyn Texture>) -> Matte {
         Matte {
             albedo
         }
@@ -27,8 +30,8 @@ impl Scatter for Matte {
             // Catch degenerate scatter direction
             scatter_direction = record.normal;
         }
-
+        let attenuation = self.albedo.value(record.u, record.v, record.p);
         let scattered = Ray::new_(record.p, scatter_direction, r_in.time);
-        return Some((self.albedo, scattered));
+        return Some((attenuation, scattered));
     }
 }
