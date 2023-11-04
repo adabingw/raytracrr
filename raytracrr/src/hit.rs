@@ -4,6 +4,7 @@ pub mod aabb;
 pub mod world;
 pub mod bvh;
 pub mod hit_record;
+pub mod quad;
 
 use super::vec::{Point3, Vec3};
 use super::ray::{Ray};

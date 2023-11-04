@@ -4,6 +4,7 @@ mod hit;
 mod camera;
 mod material;
 mod texture;
+mod perlin;
 
 use std::io::{stderr, Write};
 use rand::Rng;
@@ -16,10 +17,11 @@ use hit::world::{World};
 use hit::sphere::{Sphere};
 use hit::moving_sphere::{MovingSphere};
 use camera::{Camera};
-use material::{Scatter};
-use crate::hit::sphere;
+use crate::hit::quad::Quad;
 use crate::material::{matte::Matte, metal::Metal, dielectric::Dielectric};
 use crate::texture::checker::Checker;
+use crate::texture::image::Image;
+use crate::texture::noise::Noise;
 use crate::texture::solid::Solid;
 
 fn ray_colour(r: &Ray, world: &World, depth: u64) -> Colour {
@@ -52,21 +54,31 @@ fn ray_colour(r: &Ray, world: &World, depth: u64) -> Colour {
     }
 }
 
-fn main() {
-    // IMAGE
-    const ASPECT_RATIO: f64 = 16.0 / 9.0;
-    const IMAGE_WIDTH: u64 = 256;
-    const IMAGE_HEIGHT: u64 = ((IMAGE_WIDTH as f64) / ASPECT_RATIO) as u64;
-    const SAMPLES_PER_PIXEL: u64 = 80;
-    const MAX_DEPTH: u64 = 5;
+fn quads() -> World {
+    let mut world = World::new();
 
-    // WORLD
-    let checker = Arc::new(
-        Checker::new_texture(0.32, 
-            Colour::new(0.2, 0.3, 0.1),
-            Colour::new(0.9, 0.9, 0.9)
-        )
-    );
+    let left_red = Arc::new(Matte::new(Arc::new(Solid::new(Colour::new(1.0, 0.2, 0.2)))));
+    let back_green = Arc::new(Matte::new(Arc::new(Solid::new(Colour::new(0.2, 0.2, 1.0)))));
+    let right_blue = Arc::new(Matte::new(Arc::new(Solid::new(Colour::new(0.7, 0.2, 0.2)))));
+    let upper_orange = Arc::new(Matte::new(Arc::new(Solid::new(Colour::new(1.0, 0.3, 0.4)))));
+    let lower_teal = Arc::new(Matte::new(Arc::new(Solid::new(Colour::new(0.2, 0.8, 0.8)))));
+
+    let left_quad = Quad::new(Point3::new(-3.0, -2.0, 5.0), Vec3::new(0.0, 0.0, -4.0), Vec3::new(0.0, 4.0, 0.0), left_red);
+    let back_quad = Quad::new(Point3::new(-2.0, -2.0, 0.0), Vec3::new(4.0, 0.0, 0.0), Vec3::new(0.0, 4.0, 0.0), back_green);
+    let right_quad = Quad::new(Point3::new(3.0, -2.0, 1.0), Vec3::new(0.0, 0.0, 4.0), Vec3::new(0.0, 4.0, 0.0), right_blue);
+    let upper_quad = Quad::new(Point3::new(-2.0, 2.0, 1.0), Vec3::new(4.0, 0.0, 0.0), Vec3::new(0.0, 0.0, 4.0), upper_orange);
+    let lower_quad = Quad::new(Point3::new(-2.0, -2.0, 5.0), Vec3::new(4.0, 0.0, 0.0), Vec3::new(0.0, 0.0, -4.0), lower_teal);
+
+    // Quads
+    world.push(Arc::new(Box::new(left_quad)));
+    world.push(Arc::new(Box::new(back_quad)));
+    world.push(Arc::new(Box::new(right_quad)));
+    world.push(Arc::new(Box::new(upper_quad)));
+    world.push(Arc::new(Box::new(lower_quad)));
+    world
+}
+
+fn lots_of_spheres() -> World {
     let mut world = World::new();
     let mut rng = rand::thread_rng();
 
@@ -87,7 +99,7 @@ fn main() {
                         )
                     )
                 );
-                let center1 = center + Vec3::new(0.0, rng.gen_range(0.0..0.5), 0.0);
+                let center1 = center + Vec3::new(0.0, rng.gen_range(0.0..0.3), 0.0);
                 let sphere = Sphere::new(
                     center, 0.2, sphere_mat
                 );
@@ -129,31 +141,63 @@ fn main() {
         }
     }
 
+    let checker = Arc::new(
+        Checker::new_texture(0.32, 
+            Colour::new(0.2, 0.3, 0.1),
+            Colour::new(0.9, 0.9, 0.9)
+        )
+    );
+    let mat_perlin = Arc::new(Matte::new(Arc::new(Noise::new(4.0))));
     let mat_ground = Arc::new(Matte::new(checker));
-    let mat_center = Arc::new(Matte::new(Arc::new(Solid::new(Colour::new(0.4, 0.2, 0.1)))));
+    let mat_center = Arc::new(
+        Matte::new(
+            Arc::new(
+                Image::new("earth.jpg").unwrap()
+            )
+        )
+    );
     let mat_left = Arc::new(Dielectric::new(1.5));
     let mat_right = Arc::new(Metal::new(Arc::new(Solid::new(Colour::new(0.8, 0.6, 0.2))), 0.0));
 
-    let ground_sphere = Sphere::new(Point3::new(0.0, -1000.0, 0.0), 1000.0, mat_ground);
+    let ground_sphere = Sphere::new(Point3::new(0.0, -1000.0, 0.0), 1000.0, mat_perlin.clone());
     let sphere_center = Sphere::new(Point3::new(0.0, 1.0, 0.0), 1.0, mat_center);
     let sphere_left = Sphere::new(Point3::new(-4.0, 1.0, 0.0), 1.0, mat_left);
-    let sphere_right = Sphere::new(Point3::new(4.0, 1.0, 0.0), 1.0, mat_right);
+    let sphere_right = Sphere::new(Point3::new(4.0, 1.0, 0.0), 1.0, mat_perlin);
 
+    let earth_texture = Image::new("earth.jpg").unwrap();
+    let earth_surface: Matte = Matte::new(Arc::new(earth_texture));
+    let globe = Sphere::new(Vec3::new(0.0, 0.0, 0.0), 2.0, Arc::new(earth_surface));
+
+    world.push(Arc::new(Box::new(globe)));
     world.push(Arc::new(Box::new(ground_sphere)));
     world.push(Arc::new(Box::new(sphere_center)));
     world.push(Arc::new(Box::new(sphere_left)));
     world.push(Arc::new(Box::new(sphere_right)));
 
-    let lookfrom = Point3::new(13.0, 2.0, 3.0);
+    world
+}
+
+fn main() {
+    // IMAGE
+    const ASPECT_RATIO: f64 = 1.0;
+    const IMAGE_WIDTH: u64 = 400;
+    const IMAGE_HEIGHT: u64 = ((IMAGE_WIDTH as f64) / ASPECT_RATIO) as u64;
+    const SAMPLES_PER_PIXEL: u64 = 80;
+    const MAX_DEPTH: u64 = 5;
+
+    // WORLD
+    let mut world = quads();
+
+    let lookfrom = Point3::new(-2.0, -2.0, 8.0);
     let lookat = Point3::new(0.0, 0.0, 0.0);
     let vup = Vec3::new(0.0, 1.0, 0.0);
     let dist_to_focus = 10.0;
-    let aperture = 0.1;
+    let aperture = 0.0;
 
     let camera = Camera::new(lookfrom,
         lookat,
         vup,
-        20.0,
+        80.0,
         ASPECT_RATIO,
         aperture,
         dist_to_focus

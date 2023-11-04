@@ -1,5 +1,7 @@
 pub mod solid;
 pub mod checker;
+pub mod image;
+pub mod noise;
 
 use crate::vec::{Colour, Vec3};
 

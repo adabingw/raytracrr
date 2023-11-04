@@ -18,6 +18,16 @@ impl AABB {
         }
     }
 
+    pub fn new_pad(minimum: Vec3, maximum: Vec3) -> AABB {
+        let delta = 0.0001;
+        let Vec3 { e: [maxx, maxy, maxz] } = maximum;
+
+        AABB {
+            minimum: minimum, 
+            maximum: Vec3::new(maxx + delta, maxy + delta, maxz + delta)
+        }
+    }
+
     pub fn surrounding_box(bbox1: AABB, bbox2: AABB) -> AABB {
         let Vec3 { e: [bb1minx, bb1miny, bb1minz] } = bbox1.minimum;
         let Vec3 { e: [bb1maxx, bb1maxy, bb1maxz] } = bbox1.maximum;
