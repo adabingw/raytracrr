@@ -6,7 +6,9 @@ mod material;
 mod texture;
 mod perlin;
 
+use std::f64::INFINITY;
 use std::io::{stderr, Write};
+use material::diffuse::Diffuse;
 use rand::Rng;
 use std::sync::Arc;
 
@@ -24,7 +26,7 @@ use crate::texture::image::Image;
 use crate::texture::noise::Noise;
 use crate::texture::solid::Solid;
 
-fn ray_colour(r: &Ray, world: &World, depth: u64) -> Colour {
+fn ray_colour(r: &Ray, background: Colour, world: &World, depth: u64) -> Colour {
     // ray going from origin (camera eye) to point on the screen
     // linearly blends white and blue depending on the height of the y coordinate 
     // after scaling the ray direction to unit length (−1.0 < y < 1.0). 
@@ -42,15 +44,17 @@ fn ray_colour(r: &Ray, world: &World, depth: u64) -> Colour {
     }
 
     if let Some(record) = world.hit(r, 0.001..f64::INFINITY) {
+        let emit = record.material.as_ref().emitted(record.u, record.v, record.p);
         if let Some((attenuation, scattered)) = record.material.scatter(r, &record) {
-            attenuation * ray_colour(&scattered, world, depth - 1)
+            emit + attenuation * ray_colour(&scattered, background, world, depth - 1)
         } else {
-            Colour::new(0.0, 0.0, 0.0)
+            emit
         }
     } else {
-        let unit_direction = r.direction().normalized();
-        let t = 0.5 * (unit_direction.y() as f64 + 1.0);
-        (1.0 - t) * Colour::new(1.0, 1.0, 1.0) + t * Colour::new(0.5, 0.7, 1.0)
+        // let unit_direction = r.direction().normalized();
+        // let t = 0.5 * (unit_direction.y() as f64 + 1.0);
+        // (1.0 - t) * Colour::new(1.0, 1.0, 1.0) + t * Colour::new(0.5, 0.7, 1.0)
+        background
     }
 }
 
@@ -75,6 +79,30 @@ fn quads() -> World {
     world.push(Arc::new(Box::new(right_quad)));
     world.push(Arc::new(Box::new(upper_quad)));
     world.push(Arc::new(Box::new(lower_quad)));
+    world
+}
+
+fn simple_light() -> World {
+    let mut world = World::new();
+
+    let mat_perlin = Arc::new(Matte::new(Arc::new(Noise::new(4.0))));
+    let ground_sphere = Sphere::new(Point3::new(0.0, -1000.0, 0.0), 1000.0, mat_perlin.clone());
+    let sphere_center = Sphere::new(Point3::new(0.0, 1.0, 0.0), 1.0, mat_perlin);
+
+    let difflight = Arc::new(Diffuse::new(Arc::new(Solid::new(Colour::new(4.0,4.0,4.0)))));
+    let light = Quad::new(
+        Point3::new(3.0,1.0,-1.0), 
+        Vec3::new(-7.0,0.0,0.0), 
+        Vec3::new(0.0,-2.0,0.0), 
+        difflight.clone()
+    );
+    let lightball = Sphere::new(Point3::new(0.0, 7.0, 0.0), 2.0, difflight);
+
+    world.push(Arc::new(Box::new(ground_sphere)));
+    world.push(Arc::new(Box::new(light)));
+    world.push(Arc::new(Box::new(lightball)));
+    world.push(Arc::new(Box::new(sphere_center)));
+
     world
 }
 
@@ -179,17 +207,17 @@ fn lots_of_spheres() -> World {
 
 fn main() {
     // IMAGE
-    const ASPECT_RATIO: f64 = 1.0;
+    const ASPECT_RATIO: f64 = 16.0 / 9.0;
     const IMAGE_WIDTH: u64 = 400;
     const IMAGE_HEIGHT: u64 = ((IMAGE_WIDTH as f64) / ASPECT_RATIO) as u64;
     const SAMPLES_PER_PIXEL: u64 = 80;
     const MAX_DEPTH: u64 = 5;
 
     // WORLD
-    let mut world = quads();
+    let mut world = simple_light();
 
-    let lookfrom = Point3::new(-2.0, -2.0, 8.0);
-    let lookat = Point3::new(0.0, 0.0, 0.0);
+    let lookfrom = Point3::new(26.0, 3.0, 6.0);
+    let lookat = Point3::new(0.0, 2.0, 0.0);
     let vup = Vec3::new(0.0, 1.0, 0.0);
     let dist_to_focus = 10.0;
     let aperture = 0.0;
@@ -197,10 +225,11 @@ fn main() {
     let camera = Camera::new(lookfrom,
         lookat,
         vup,
-        80.0,
+        20.0,
         ASPECT_RATIO,
         aperture,
-        dist_to_focus
+        dist_to_focus,
+        Colour::new(0.00, 0.00, 0.00)
     );
 
     println!("P3");
@@ -224,7 +253,7 @@ fn main() {
                 let v = (j as f64 + random_v) / ((IMAGE_HEIGHT - 1) as f64);
     
                 let r = camera.get_ray(u, v);
-                pixel += ray_colour(&r, &world, MAX_DEPTH);
+                pixel += ray_colour(&r, camera.background, &world, MAX_DEPTH);
             }
 
             println!("{}", pixel.format_color(SAMPLES_PER_PIXEL));

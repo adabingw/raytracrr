@@ -1,3 +1,5 @@
+use crate::vec::Colour;
+
 use super::vec::{Point3, Vec3};
 use super::ray::{Ray};
 use rand::Rng;
@@ -9,7 +11,8 @@ pub struct Camera {
     vertical: Vec3, 
     cu: Vec3, 
     cv: Vec3, 
-    lens_radius: f64
+    lens_radius: f64, 
+    pub background: Colour
 }
 
 impl Camera {
@@ -20,7 +23,8 @@ impl Camera {
         vfov: f64, 
         aspect_ratio: f64,
         aperture: f64, 
-        focus_dist: f64
+        focus_dist: f64,
+        background: Colour
     ) -> Camera {
         // CAMERA
         // viewport's aspect ratio should be the same as rendered image. 
@@ -49,6 +53,7 @@ impl Camera {
             horizontal,
             vertical,
             cu: cu, 
+            background: background,
             cv: cv, 
             lens_radius: aperture / 2.0
         }
