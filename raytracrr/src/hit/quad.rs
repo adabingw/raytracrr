@@ -38,7 +38,10 @@ use super::{aabb::AABB, Hit, hit_record::HitRecord};
  * check that 0 <= a <= 1 and 0 <= b <= 1
  */
 
-// TODO: fix wack
+// FIXME: for some reason, following the direct implementation in the c++ code doesn't work
+// i kept this one for reference (might try to fix it later but i've been 
+// staring at it for a while and idk what went wrong).
+// see Rect for the correctly implemented hittable :sob:
 pub struct Quad {
     Q: Point3,
     u: Vec3,

@@ -21,9 +21,10 @@ impl AABB {
     pub fn new_pad(minimum: Vec3, maximum: Vec3) -> AABB {
         let delta = 0.0001;
         let Vec3 { e: [maxx, maxy, maxz] } = maximum;
+        let Vec3 { e: [minx, miny, minz] } = minimum;
 
         AABB {
-            minimum: minimum, 
+            minimum: Vec3::new(minx + delta, miny + delta, minz + delta), 
             maximum: Vec3::new(maxx + delta, maxy + delta, maxz + delta)
         }
     }

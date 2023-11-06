@@ -5,6 +5,10 @@ pub mod world;
 pub mod bvh;
 pub mod hit_record;
 pub mod quad;
+pub mod rect;
+pub mod block;
+pub mod translate;
+pub mod rotate;
 
 use super::vec::{Point3, Vec3};
 use super::ray::{Ray};
