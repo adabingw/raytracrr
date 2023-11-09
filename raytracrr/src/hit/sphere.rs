@@ -22,6 +22,10 @@ impl Sphere {
             material
         }
     }
+
+    pub fn new_arc(center: Point3, radius: f64, material: Arc<dyn Scatter>) -> Arc<Box<Sphere>> {
+        Arc::new(Box::new(Sphere::new(center, radius, material)))
+    }
 }
 
 impl Hit for Sphere {

@@ -16,6 +16,10 @@ impl Matte {
             albedo
         }
     }
+
+    pub fn new_arc(albedo: Arc<dyn Texture>) -> Arc<Matte> {
+        Arc::new(Matte::new(albedo))
+    }
 }
 
 // it can either scatter always and attenuate by its reflectance R

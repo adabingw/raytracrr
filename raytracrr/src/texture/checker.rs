@@ -40,6 +40,14 @@ impl Checker {
             odd: Arc::new(Solid::new(c2))
         }
     }
+
+    pub fn new_arc(scale: f64, even: Arc<dyn Texture>, odd: Arc<dyn Texture>) -> Arc<Checker> {
+        Arc::new(Checker::new(scale, even, odd))
+    }
+
+    pub fn new_texture_arc(scale: f64, c1: Colour, c2: Colour) -> Arc<Checker> {
+        Arc::new(Checker::new_texture(scale, c1, c2))
+    }
 }
 
 impl Texture for Checker {

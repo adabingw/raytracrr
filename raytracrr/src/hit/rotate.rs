@@ -84,6 +84,10 @@ impl Rotate {
             axis
         }
     }
+
+    pub fn new_arc(object: Arc<dyn Hit>, theta: f64, axis: i32) -> Arc<Box<Rotate>> {
+        Arc::new(Box::new(Rotate::new(object, theta, axis)))
+    }
 }
 
 impl Hit for Rotate {

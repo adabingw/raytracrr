@@ -26,6 +26,10 @@ impl Rect {
             u, v, k, axis, material
         }
     }
+
+    pub fn new_arc(u: Range<f64>, v: Range<f64>, k: f64, axis: i32, material: Arc<dyn Scatter>) -> Arc<Box<Rect>> {
+        Arc::new(Box::new(Rect::new(u, v, k, axis, material)))
+    }
 }
 
 impl Hit for Rect {

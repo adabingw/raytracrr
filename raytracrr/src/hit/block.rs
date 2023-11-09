@@ -41,6 +41,11 @@ impl Block {
             sides,
         }
     }
+
+    pub fn new_arc(b_min: Vec3, b_max: Vec3, material: Arc<dyn Scatter>) -> Arc<Box<Block>> {
+        Arc::new(Box::new(Block::new(b_min, b_max, material)))
+    }
+    
 }
 
 impl Hit for Block {

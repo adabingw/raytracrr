@@ -28,6 +28,10 @@ impl MovingSphere {
         // center1, and t = 1 yields center2.
         self.centers.0 + time * self.centers.1
     }
+
+    pub fn new_arc(center: Point3, center1: Point3, radius: f64, material: Arc<dyn Scatter>) -> Arc<Box<MovingSphere>> {
+        Arc::new(Box::new(MovingSphere::new(center, center1, radius, material)))
+    }
 }
 
 impl Hit for MovingSphere {

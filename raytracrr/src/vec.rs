@@ -4,7 +4,7 @@ use std::fmt::Display;
 
 use rand::Rng;
 
-#[derive(Clone, Copy, Default)]
+#[derive(Clone, Copy, Default, Debug)]
 pub struct Vec3 {
     pub e: [f64; 3]
 }

@@ -18,6 +18,10 @@ impl Metal {
             fuzz
         }
     }
+
+    pub fn new_arc(albedo: Arc<dyn Texture>, fuzz: f64) -> Arc<Metal> {
+        Arc::new(Metal::new(albedo, fuzz))
+    }
 }
 
 impl Scatter for Metal {

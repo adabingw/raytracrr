@@ -2,6 +2,7 @@ pub mod metal;
 pub mod matte;
 pub mod dielectric;
 pub mod diffuse;
+pub mod isotropic;
 
 use super::vec::{Vec3, Colour};
 use super::hit::hit_record::{HitRecord};

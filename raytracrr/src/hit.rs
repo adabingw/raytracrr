@@ -9,6 +9,7 @@ pub mod rect;
 pub mod block;
 pub mod translate;
 pub mod rotate;
+pub mod constant_medium;
 
 use super::vec::{Point3, Vec3};
 use super::ray::{Ray};

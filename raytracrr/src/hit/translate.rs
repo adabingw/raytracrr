@@ -24,6 +24,10 @@ impl Translate {
             object, offset
         }
     }
+
+    pub fn new_arc(object: Arc<dyn Hit>, offset: Vec3) -> Arc<dyn Hit> {
+        Arc::new(Translate::new(object, offset))
+    }
 }
 
 impl Hit for Translate {

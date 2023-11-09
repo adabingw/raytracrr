@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use rand::{Rng};
 
 use crate::material::{Scatter};
@@ -25,6 +27,10 @@ impl Dielectric {
         // use schlick's approximation for reflectance
         let r_0 = ((1.0 - reflective_index) / (1.0 + reflective_index)).powi(2);
         r_0 + (1.0 - r_0) * (1.0 - cosine).powi(5)
+    }
+
+    pub fn new_arc(ir: f64) -> Arc<Dielectric> {
+        Arc::new(Dielectric::new(ir))
     }
 }
 

@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use crate::{perlin::Perlin, vec::{Colour, Vec3}};
 use super::Texture;
 
@@ -12,6 +14,10 @@ impl Noise {
             perlin: Perlin::new(),
             scale
         }
+    }
+
+    pub fn new_arc(scale: f64) -> Arc<Noise> {
+        Arc::new(Noise::new(scale))
     }
 }
 

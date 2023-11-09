@@ -6,9 +6,9 @@ mod material;
 mod texture;
 mod perlin;
 
-use std::f64::INFINITY;
 use std::io::{stderr, Write};
 use hit::block::Block;
+use hit::constant_medium::ConstantMedium;
 use hit::rect::Rect;
 use hit::rotate::Rotate;
 use hit::translate::Translate;
@@ -66,10 +66,10 @@ fn cornell_box() -> World {
 
     let mut world = World::new();
 
-    let red = Arc::new(Matte::new(Arc::new(Solid::new(Colour::new(0.65, 0.05, 0.05)))));
-    let white = Arc::new(Matte::new(Arc::new(Solid::new(Colour::new(0.73, 0.73, 0.73)))));
-    let green = Arc::new(Matte::new(Arc::new(Solid::new(Colour::new(0.12, 0.45, 0.15)))));
-    let light = Arc::new(Diffuse::new(Arc::new(Solid::new(Colour::new(15.0, 15.0, 15.0)))));
+    let red = Matte::new_arc(Solid::new_arc(Colour::new(0.65, 0.05, 0.05)));
+    let white = Matte::new_arc(Arc::new(Solid::new(Colour::new(0.73, 0.73, 0.73))));
+    let green = Matte::new_arc(Arc::new(Solid::new(Colour::new(0.12, 0.45, 0.15))));
+    let light = Diffuse::new_arc(Arc::new(Solid::new(Colour::new(15.0, 15.0, 15.0))));
     
     let left = Rect::new(0.0..555.0, 0.0..555.0, 555.0, 2, green);
     let right = Rect::new(0.0..555.0, 0.0..555.0, 0.0, 2, red);
@@ -108,14 +108,61 @@ fn cornell_box() -> World {
     world
 }
 
+fn cornell_smoke() -> World {
+
+    let mut world = World::new();
+
+    let red = Matte::new_arc(Solid::new_arc(Colour::new(0.65, 0.05, 0.05)));
+    let white = Matte::new_arc(Arc::new(Solid::new(Colour::new(0.73, 0.73, 0.73))));
+    let green = Matte::new_arc(Arc::new(Solid::new(Colour::new(0.12, 0.45, 0.15))));
+    let light = Diffuse::new_arc(Arc::new(Solid::new(Colour::new(15.0, 15.0, 15.0))));
+    
+    let left = Rect::new(0.0..555.0, 0.0..555.0, 555.0, 2, green);
+    let right = Rect::new(0.0..555.0, 0.0..555.0, 0.0, 2, red);
+    let lightRect = Rect::new(213.0..343.0, 113.0..332.0, 554.0, 1, light.clone());
+    let bottom = Rect::new(0.0..555.0, 0.0..555.0, 0.0, 1, white.clone());
+    let top = Rect::new(0.0..555.0, 0.0..555.0, 555.0, 1, white.clone());
+    let back = Rect::new(0.0..555.0, 0.0..555.0, 555.0, 0, white.clone());
+
+    let box1 = Block::new(
+        Vec3::new(0.0, 0.0, 0.0),
+        Vec3::new(165.0, 330.0, 165.0),
+        white.clone()
+    );
+    let mut box1_rotate = Rotate::new(Arc::new(box1), 35.0, 1);
+    box1_rotate = Rotate::new(Arc::new(box1_rotate), 25.0, 0);
+    box1_rotate = Rotate::new(Arc::new(box1_rotate), -15.0, 2);
+    let box1_translate = Translate::new_arc(Arc::new(box1_rotate), Vec3::new(265.0, 0.0, 295.0));
+
+    let box2 = Block::new(
+        Vec3::new(0.0, 0.0, 0.0),
+        Vec3::new(165.0, 165.0, 165.0),
+        white.clone(),
+    );
+    let box2_rotate = Rotate::new(Arc::new(box2), -18.0, 1);
+    let box2_translate = Translate::new_arc(Arc::new(box2_rotate), Vec3::new(130.0, 0.0, 65.0));
+        
+    world.push(Arc::new(Box::new(left)));
+    world.push(Arc::new(Box::new(right)));
+    world.push(Arc::new(Box::new(bottom)));
+    world.push(Arc::new(Box::new(top)));
+    world.push(Arc::new(Box::new(back)));
+    world.push(Arc::new(Box::new(lightRect)));
+    world.push(ConstantMedium::new_arc(box1_translate, Solid::new_arc(Colour::new(1.0, 1.0, 1.0)), 0.06));
+    world.push(ConstantMedium::new_arc(box2_translate, Solid::new_arc(Colour::new(0.0, 1.0, 0.0)), 0.05));
+
+    world
+}
+
+
 fn simple_light() -> World {
     let mut world = World::new();
 
-    let mat_perlin = Arc::new(Matte::new(Arc::new(Noise::new(4.0))));
+    let mat_perlin = Matte::new_arc(Noise::new_arc(4.0));
     let ground_sphere = Sphere::new(Point3::new(0.0, -1000.0, 0.0), 1000.0, mat_perlin.clone());
     let sphere_center = Sphere::new(Point3::new(0.0, 1.0, 0.0), 1.0, mat_perlin);
 
-    let difflight = Arc::new(Diffuse::new(Arc::new(Solid::new(Colour::new(4.0,4.0,4.0)))));
+    let difflight = Diffuse::new_arc(Solid::new_arc(Colour::new(4.0,4.0,4.0)));
     let _light = Quad::new(
         Point3::new(3.0,1.0,-1.0), 
         Vec3::new(-7.0,0.0,0.0), 
@@ -168,13 +215,7 @@ fn lots_of_spheres() -> World {
                 // Metal
                 let albedo = Colour::random(0.4..1.0);
                 let fuzz = rng.gen_range(0.0..0.5);
-                let sphere_mat = Arc::new(
-                    Metal::new(
-                        Arc::new(
-                            Solid::new(albedo)
-                        ), fuzz
-                    )
-                );
+                let sphere_mat = Metal::new_arc(Solid::new_arc(albedo), fuzz);
                 let center1 = center + Vec3::new(0.0, rng.gen_range(0.0..0.5), 0.0);
                 let sphere = MovingSphere::new(
                     center, 
@@ -184,7 +225,7 @@ fn lots_of_spheres() -> World {
                 world.push(Arc::new(Box::new(sphere)));
             } else {
                 // Glass
-                let sphere_mat = Arc::new(Dielectric::new(1.5));
+                let sphere_mat = Dielectric::new_arc(1.5);
                 let center1 = center + Vec3::new(0.0, rng.gen_range(0.0..0.5), 0.0);
                 let sphere = MovingSphere::new(
                     center, 
@@ -196,23 +237,15 @@ fn lots_of_spheres() -> World {
         }
     }
 
-    let checker = Arc::new(
-        Checker::new_texture(0.32, 
+    let checker = Checker::new_texture_arc(0.32, 
             Colour::new(0.2, 0.3, 0.1),
             Colour::new(0.9, 0.9, 0.9)
-        )
     );
-    let mat_perlin = Arc::new(Matte::new(Arc::new(Noise::new(4.0))));
-    let mat_ground = Arc::new(Matte::new(checker));
-    let mat_center = Arc::new(
-        Matte::new(
-            Arc::new(
-                Image::new("earth.jpg").unwrap()
-            )
-        )
-    );
+    let mat_perlin = Matte::new_arc(Noise::new_arc(4.0));
+    let mat_ground = Matte::new_arc(checker);
+    let mat_center = Matte::new_arc(Arc::new(Image::new("earth.jpg").unwrap()));
     let mat_left = Arc::new(Dielectric::new(1.5));
-    let mat_right = Arc::new(Metal::new(Arc::new(Solid::new(Colour::new(0.8, 0.6, 0.2))), 0.0));
+    let mat_right = Metal::new_arc(Solid::new_arc(Colour::new(0.8, 0.6, 0.2)), 0.0);
 
     let ground_sphere = Sphere::new(Point3::new(0.0, -1000.0, 0.0), 1000.0, mat_perlin.clone());
     let sphere_center = Sphere::new(Point3::new(0.0, 1.0, 0.0), 1.0, mat_center);
@@ -241,7 +274,7 @@ fn main() {
     const MAX_DEPTH: u64 = 5;
 
     // WORLD
-    let world = cornell_box();
+    let world = cornell_smoke();
 
     let lookfrom = Point3::new(278.0, 278.0, -800.0);
     let lookat = Point3::new(278.0, 278.0, 0.0);

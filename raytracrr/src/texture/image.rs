@@ -30,6 +30,10 @@ impl Image {
         let data = data.to_rgb8();
         Ok(Image {data})
     }
+
+    pub fn new_arc(filename: impl AsRef<Path>) -> Arc<Result<Image, Box<dyn Error + Send + Sync>>> {
+        Arc::new(Image::new(filename))
+    }
 }
 
 impl Texture for Image {

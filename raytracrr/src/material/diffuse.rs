@@ -17,6 +17,10 @@ impl Diffuse {
             emit: Arc::new(Solid::new(c))
         }
     }
+
+    pub fn new_arc(emit: Arc<dyn Texture>) -> Arc<Diffuse> {
+        Arc::new(Diffuse::new(emit))
+    }
 }
 
 impl Scatter for Diffuse {
