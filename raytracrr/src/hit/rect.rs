@@ -27,7 +27,7 @@ impl Rect {
         }
     }
 
-    pub fn new_arc(u: Range<f64>, v: Range<f64>, k: f64, axis: i32, material: Arc<dyn Scatter>) -> Arc<Box<Rect>> {
+    pub fn new_arc(u: Range<f64>, v: Range<f64>, k: f64, axis: i32, material: Arc<dyn Scatter>) -> Arc<Box<dyn Hit>> {
         Arc::new(Box::new(Rect::new(u, v, k, axis, material)))
     }
 }

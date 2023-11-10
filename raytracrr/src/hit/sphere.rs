@@ -23,7 +23,11 @@ impl Sphere {
         }
     }
 
-    pub fn new_arc(center: Point3, radius: f64, material: Arc<dyn Scatter>) -> Arc<Box<Sphere>> {
+    pub fn new_arc(center: Point3, radius: f64, material: Arc<dyn Scatter>) -> Arc<dyn Hit> {
+        Arc::new(Sphere::new(center, radius, material))
+    }
+
+    pub fn new_hittable(center: Point3, radius: f64, material: Arc<dyn Scatter>) -> Arc<Box<dyn Hit>> {
         Arc::new(Box::new(Sphere::new(center, radius, material)))
     }
 }

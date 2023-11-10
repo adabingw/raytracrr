@@ -11,14 +11,16 @@ use crate::vec::{Point3, Vec3};
 pub struct MovingSphere {
     centers: (Point3, Point3),
     radius: f64,
+    time: Range<f64>,
     material: Arc<dyn Scatter>
 }
 
 impl MovingSphere {
-    pub fn new(center: Point3, center1: Point3, radius: f64, material: Arc<dyn Scatter>) -> MovingSphere {
+    pub fn new(center: Point3, center1: Point3, radius: f64, time: Range<f64>, material: Arc<dyn Scatter>) -> MovingSphere {
         MovingSphere {
             centers: (center, center1), 
             radius,
+            time,
             material
         }
     }
@@ -26,11 +28,11 @@ impl MovingSphere {
     pub fn sphere_center(&self, time: f64) -> Point3 {
         // Linearly interpolate from center1 to center2 according to time, where t=0 yields
         // center1, and t = 1 yields center2.
-        self.centers.0 + time * self.centers.1
+        self.centers.0 + ((time - self.time.start) / (self.time.end - self.time.start)) * (self.centers.1 - self.centers.0)
     }
 
-    pub fn new_arc(center: Point3, center1: Point3, radius: f64, material: Arc<dyn Scatter>) -> Arc<Box<MovingSphere>> {
-        Arc::new(Box::new(MovingSphere::new(center, center1, radius, material)))
+    pub fn new_arc(center: Point3, center1: Point3, radius: f64, time: Range<f64>, material: Arc<dyn Scatter>) -> Arc<Box<dyn Hit>> {
+        Arc::new(Box::new(MovingSphere::new(center, center1, radius, time, material)))
     }
 }
 
